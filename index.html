@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barkingham Wheel</title>
+    <style>
+        :root {
+            --ink: #1e2523;
+            --muted: #65706c;
+            --paper: #fffdf7;
+            --line: #d9ddd8;
+            --green: #176b55;
+            --green-dark: #0f4e3e;
+            --gold: #f3b53f;
+            --danger: #b33a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 15% 15%, rgb(243 181 63 / 24%) 0 2px, transparent 3px),
+                linear-gradient(135deg, #eef6ef, #fff9e9 55%, #f2ede3);
+            background-size: 28px 28px, auto;
+            font-family: Georgia, "Times New Roman", serif;
+            display: grid;
+            place-items: center;
+            padding: 32px 18px;
+        }
+
+        main {
+            width: min(680px, 100%);
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-top: 7px solid var(--gold);
+            box-shadow: 0 22px 60px rgb(40 55 48 / 16%);
+            padding: clamp(24px, 6vw, 48px);
+        }
+
+        header {
+            margin-bottom: 30px;
+        }
+
+        .eyebrow {
+            margin: 0 0 8px;
+            color: var(--green);
+            font: 700 0.76rem/1.2 "Trebuchet MS", sans-serif;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(2.25rem, 8vw, 4.6rem);
+            font-weight: 500;
+            line-height: 0.95;
+            letter-spacing: 0;
+        }
+
+        .subtitle {
+            margin: 14px 0 0;
+            color: var(--muted);
+            font: 1rem/1.5 "Trebuchet MS", sans-serif;
+        }
+
+        form {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 10px;
+        }
+
+        label {
+            grid-column: 1 / -1;
+            font: 700 0.9rem/1.2 "Trebuchet MS", sans-serif;
+        }
+
+        input {
+            min-width: 0;
+            height: 50px;
+            padding: 0 15px;
+            color: var(--ink);
+            background: #fff;
+            border: 1px solid #aeb7b2;
+            border-radius: 4px;
+            font: 1.1rem/1 "Trebuchet MS", sans-serif;
+        }
+
+        input:focus {
+            border-color: var(--green);
+            outline: 3px solid rgb(23 107 85 / 18%);
+        }
+
+        button {
+            border: 0;
+            border-radius: 4px;
+            font: 700 0.92rem/1 "Trebuchet MS", sans-serif;
+            cursor: pointer;
+        }
+
+        #addPlayer {
+            min-width: 112px;
+            padding: 0 20px;
+            color: white;
+            background: var(--green);
+        }
+
+        #addPlayer:hover:not(:disabled) {
+            background: var(--green-dark);
+        }
+
+        button:disabled,
+        input:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        .message {
+            min-height: 24px;
+            margin: 8px 0 0;
+            color: var(--danger);
+            font: 0.88rem/1.4 "Trebuchet MS", sans-serif;
+        }
+
+        .list-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            margin: 22px 0 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--line);
+        }
+
+        h2 {
+            margin: 0;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .count {
+            color: var(--muted);
+            font: 0.88rem/1 "Trebuchet MS", sans-serif;
+            white-space: nowrap;
+        }
+
+        .empty {
+            margin: 28px 0;
+            color: var(--muted);
+            font: italic 1rem/1.5 Georgia, serif;
+            text-align: center;
+        }
+
+        ol {
+            max-height: 360px;
+            margin: 0;
+            padding: 0;
+            overflow-y: auto;
+            list-style: none;
+            counter-reset: player;
+        }
+
+        li {
+            counter-increment: player;
+            display: grid;
+            grid-template-columns: 38px 1fr 36px;
+            align-items: center;
+            min-height: 49px;
+            border-bottom: 1px solid #eceeea;
+            font: 1rem/1.3 "Trebuchet MS", sans-serif;
+        }
+
+        li::before {
+            content: counter(player, decimal-leading-zero);
+            color: #8a928e;
+            font-size: 0.76rem;
+        }
+
+        .remove {
+            width: 32px;
+            height: 32px;
+            color: var(--danger);
+            background: transparent;
+            font-size: 1.35rem;
+        }
+
+        .remove:hover {
+            background: #faeaea;
+        }
+
+        @media (max-width: 480px) {
+            main {
+                padding: 24px 20px;
+            }
+
+            form {
+                grid-template-columns: 1fr;
+            }
+
+            #addPlayer {
+                height: 48px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <header>
+            <p class="eyebrow">Player registration</p>
+            <h1>Barkingham Wheel</h1>
+            <p class="subtitle">Enter up to 100 unique numeric player IDs.</p>
+        </header>
+
+        <form id="playerForm" novalidate>
+            <label for="playerId">Player ID</label>
+            <input id="playerId" name="playerId" type="text" inputmode="numeric" pattern="[0-9]+" autocomplete="off"
+                placeholder="Enter numeric ID" aria-describedby="message" required autofocus>
+            <button id="addPlayer" type="submit">Add player</button>
+        </form>
+        <p id="message" class="message" role="alert" aria-live="polite"></p>
+
+        <section aria-labelledby="playersHeading">
+            <div class="list-heading">
+                <h2 id="playersHeading">Players</h2>
+                <span id="playerCount" class="count">0 / 100</span>
+            </div>
+            <p id="emptyState" class="empty">No players have entered yet.</p>
+            <ol id="playerList"></ol>
+        </section>
+    </main>
+
+    <script>
+        const MAX_PLAYERS = 100;
+        const playerIds = new Set();
+        const form = document.getElementById("playerForm");
+        const input = document.getElementById("playerId");
+        const addButton = document.getElementById("addPlayer");
+        const list = document.getElementById("playerList");
+        const count = document.getElementById("playerCount");
+        const message = document.getElementById("message");
+        const emptyState = document.getElementById("emptyState");
+
+        function updateState() {
+            const isFull = playerIds.size >= MAX_PLAYERS;
+            count.textContent = `${playerIds.size} / ${MAX_PLAYERS}`;
+            emptyState.hidden = playerIds.size > 0;
+            input.disabled = isFull;
+            addButton.disabled = isFull;
+
+            if (isFull) {
+                message.textContent = "The player list is full.";
+            }
+        }
+
+        function addPlayer(playerId) {
+            playerIds.add(playerId);
+
+            const item = document.createElement("li");
+            const idText = document.createElement("span");
+            const removeButton = document.createElement("button");
+
+            idText.textContent = playerId;
+            removeButton.type = "button";
+            removeButton.className = "remove";
+            removeButton.textContent = "×";
+            removeButton.setAttribute("aria-label", `Remove player ${playerId}`);
+            removeButton.title = "Remove player";
+            removeButton.addEventListener("click", () => {
+                playerIds.delete(playerId);
+                item.remove();
+                message.textContent = "";
+                updateState();
+                input.focus();
+            });
+
+            item.append(idText, removeButton);
+            list.appendChild(item);
+            updateState();
+        }
+
+        input.addEventListener("input", () => {
+            const numericValue = input.value.replace(/\D/g, "");
+            if (input.value !== numericValue) {
+                input.value = numericValue;
+                message.textContent = "Player IDs can contain numbers only.";
+            } else {
+                message.textContent = "";
+            }
+        });
+
+        form.addEventListener("submit", (event) => {
+            event.preventDefault();
+            const playerId = input.value.trim();
+
+            if (!playerId) {
+                message.textContent = "Enter a player ID.";
+                input.focus();
+                return;
+            }
+
+            if (!/^\d+$/.test(playerId)) {
+                message.textContent = "Player IDs can contain numbers only.";
+                input.focus();
+                return;
+            }
+
+            if (playerIds.has(playerId)) {
+                message.textContent = `Player ID ${playerId} is already on the list.`;
+                input.select();
+                return;
+            }
+
+            if (playerIds.size >= MAX_PLAYERS) {
+                message.textContent = "The player list is full.";
+                return;
+            }
+
+            addPlayer(playerId);
+            input.value = "";
+            message.textContent = "";
+            input.focus();
+        });
+
+        updateState();
+    </script>
+</body>
+
+</html>
