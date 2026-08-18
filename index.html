@@ -238,6 +238,7 @@
 
     <script>
         const MAX_PLAYERS = 100;
+        const API_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
         const playerIds = new Set();
         const form = document.getElementById("playerForm");
         const input = document.getElementById("playerId");
@@ -246,6 +247,31 @@
         const count = document.getElementById("playerCount");
         const message = document.getElementById("message");
         const emptyState = document.getElementById("emptyState");
+
+        function requestApi(params) {
+            return new Promise((resolve, reject) => {
+                if (API_URL.startsWith("PASTE_")) {
+                    reject(new Error("The Google Apps Script URL has not been configured."));
+                    return;
+                }
+
+                const callbackName = `barkingham_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                const script = document.createElement("script");
+                const timeout = setTimeout(() => finish(new Error("The request timed out.")), 10000);
+
+                function finish(error, data) {
+                    clearTimeout(timeout);
+                    delete window[callbackName];
+                    script.remove();
+                    error ? reject(error) : resolve(data);
+                }
+
+                window[callbackName] = (data) => finish(null, data);
+                script.onerror = () => finish(new Error("Could not connect to the player list."));
+                script.src = `${API_URL}?${new URLSearchParams({ ...params, callback: callbackName })}`;
+                document.head.appendChild(script);
+            });
+        }
 
         function updateState() {
             const isFull = playerIds.size >= MAX_PLAYERS;
@@ -295,7 +321,7 @@
             }
         });
 
-        form.addEventListener("submit", (event) => {
+        form.addEventListener("submit", async (event) => {
             event.preventDefault();
             const playerId = input.value.trim();
 
@@ -322,10 +348,26 @@
                 return;
             }
 
-            addPlayer(playerId);
-            input.value = "";
-            message.textContent = "";
-            input.focus();
+            input.disabled = true;
+            addButton.disabled = true;
+            message.textContent = "Adding player...";
+
+            try {
+                const result = await requestApi({ action: "add", playerId });
+                if (!result.ok) {
+                    message.textContent = result.message;
+                    return;
+                }
+
+                addPlayer(playerId);
+                input.value = "";
+                message.textContent = "Player added.";
+            } catch (error) {
+                message.textContent = error.message;
+            } finally {
+                updateState();
+                input.focus();
+            }
         });
 
         updateState();

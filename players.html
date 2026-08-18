@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barkingham Wheel Players</title>
+    <style>
+        :root {
+            --ink: #1e2523;
+            --muted: #65706c;
+            --paper: #fffdf7;
+            --line: #d9ddd8;
+            --green: #176b55;
+            --gold: #f3b53f;
+            --danger: #b33a3a;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            padding: 32px 18px;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 15% 15%, rgb(243 181 63 / 24%) 0 2px, transparent 3px),
+                linear-gradient(135deg, #eef6ef, #fff9e9 55%, #f2ede3);
+            background-size: 28px 28px, auto;
+            font-family: Georgia, "Times New Roman", serif;
+            display: grid;
+            place-items: center;
+        }
+
+        main {
+            width: min(680px, 100%);
+            padding: clamp(24px, 6vw, 48px);
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-top: 7px solid var(--gold);
+            box-shadow: 0 22px 60px rgb(40 55 48 / 16%);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(2.1rem, 7vw, 4rem);
+            font-weight: 500;
+            line-height: 1;
+            letter-spacing: 0;
+        }
+
+        .toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 24px 0 14px;
+        }
+
+        #count,
+        #status {
+            color: var(--muted);
+            font: 0.9rem/1.4 "Trebuchet MS", sans-serif;
+        }
+
+        button {
+            min-height: 42px;
+            padding: 0 18px;
+            color: white;
+            background: var(--green);
+            border: 0;
+            border-radius: 4px;
+            font: 700 0.9rem/1 "Trebuchet MS", sans-serif;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.55;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 380px;
+            resize: vertical;
+            padding: 16px;
+            color: var(--ink);
+            background: white;
+            border: 1px solid var(--line);
+            border-radius: 4px;
+            font: 1rem/1.6 "Trebuchet MS", sans-serif;
+        }
+
+        #status {
+            min-height: 20px;
+            margin: 8px 0 0;
+        }
+
+        #status.error {
+            color: var(--danger);
+        }
+
+        @media (max-width: 480px) {
+            main {
+                padding: 24px 20px;
+            }
+
+            .toolbar {
+                align-items: stretch;
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main>
+        <h1>Player IDs</h1>
+        <div class="toolbar">
+            <span id="count">Loading...</span>
+            <button id="copyIds" type="button" disabled>Copy all IDs</button>
+        </div>
+        <textarea id="playerIds" readonly aria-label="Player IDs"></textarea>
+        <p id="status" role="status" aria-live="polite"></p>
+    </main>
+
+    <script>
+        const API_URL = "PASTE_YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL_HERE";
+        const output = document.getElementById("playerIds");
+        const count = document.getElementById("count");
+        const status = document.getElementById("status");
+        const copyButton = document.getElementById("copyIds");
+
+        function requestPlayers() {
+            return new Promise((resolve, reject) => {
+                if (API_URL.startsWith("PASTE_")) {
+                    reject(new Error("The Google Apps Script URL has not been configured."));
+                    return;
+                }
+
+                const callbackName = `barkingham_${Date.now()}`;
+                const script = document.createElement("script");
+                const timeout = setTimeout(() => finish(new Error("The request timed out.")), 10000);
+
+                function finish(error, data) {
+                    clearTimeout(timeout);
+                    delete window[callbackName];
+                    script.remove();
+                    error ? reject(error) : resolve(data);
+                }
+
+                window[callbackName] = (data) => finish(null, data);
+                script.onerror = () => finish(new Error("Could not load the player list."));
+                script.src = `${API_URL}?${new URLSearchParams({ action: "list", callback: callbackName })}`;
+                document.head.appendChild(script);
+            });
+        }
+
+        async function loadPlayers() {
+            try {
+                const result = await requestPlayers();
+                if (!result.ok) throw new Error(result.message);
+                output.value = result.playerIds.join("\n");
+                count.textContent = `${result.playerIds.length} / 100 players`;
+                copyButton.disabled = result.playerIds.length === 0;
+                status.textContent = "";
+            } catch (error) {
+                count.textContent = "Unable to load players";
+                status.textContent = error.message;
+                status.className = "error";
+            }
+        }
+
+        copyButton.addEventListener("click", async () => {
+            await navigator.clipboard.writeText(output.value);
+            status.className = "";
+            status.textContent = "All player IDs copied. Paste them into Google Wheel.";
+        });
+
+        loadPlayers();
+    </script>
+</body>
+
+</html>
