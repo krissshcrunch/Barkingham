@@ -169,7 +169,7 @@
         li {
             counter-increment: player;
             display: grid;
-            grid-template-columns: 38px 1fr 36px;
+            grid-template-columns: 38px 1fr;
             align-items: center;
             min-height: 49px;
             border-bottom: 1px solid #eceeea;
@@ -180,18 +180,6 @@
             content: counter(player, decimal-leading-zero);
             color: #8a928e;
             font-size: 0.76rem;
-        }
-
-        .remove {
-            width: 32px;
-            height: 32px;
-            color: var(--danger);
-            background: transparent;
-            font-size: 1.35rem;
-        }
-
-        .remove:hover {
-            background: #faeaea;
         }
 
         @media (max-width: 480px) {
@@ -290,23 +278,9 @@
 
             const item = document.createElement("li");
             const idText = document.createElement("span");
-            const removeButton = document.createElement("button");
 
             idText.textContent = playerId;
-            removeButton.type = "button";
-            removeButton.className = "remove";
-            removeButton.textContent = "×";
-            removeButton.setAttribute("aria-label", `Remove player ${playerId}`);
-            removeButton.title = "Remove player";
-            removeButton.addEventListener("click", () => {
-                playerIds.delete(playerId);
-                item.remove();
-                message.textContent = "";
-                updateState();
-                input.focus();
-            });
-
-            item.append(idText, removeButton);
+            item.appendChild(idText);
             list.appendChild(item);
             updateState();
         }
