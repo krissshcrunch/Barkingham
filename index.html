@@ -311,6 +311,26 @@
             updateState();
         }
 
+        async function loadPlayers() {
+            input.disabled = true;
+            addButton.disabled = true;
+            message.textContent = "Loading players...";
+
+            try {
+                const result = await requestApi({ action: "list" });
+                if (!result.ok) throw new Error(result.message);
+
+                playerIds.clear();
+                list.replaceChildren();
+                result.playerIds.forEach(addPlayer);
+                message.textContent = "";
+            } catch (error) {
+                message.textContent = error.message;
+            } finally {
+                updateState();
+            }
+        }
+
         input.addEventListener("input", () => {
             const numericValue = input.value.replace(/\D/g, "");
             if (input.value !== numericValue) {
@@ -370,7 +390,7 @@
             }
         });
 
-        updateState();
+        loadPlayers();
     </script>
 </body>
 
